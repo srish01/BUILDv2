@@ -45,27 +45,35 @@ train using build framework
 python run.py --train --framework build --model deitadapter_more --n_tasks 10 --dataset timgnet --adapter_latent 64 --optim sgd --n_epochs 40 --lr 0.001 --batch_size 64 --class_order 0 --folder build_cifar100-10T
 ```
 
+## MORE implementation 
+We keep their original script for training with minor edits to make it compatible for OOD implementation
+
+### For Forward pass
+
+python run.py --framework more --model deitadapter_more --n_tasks 20 --dataset cifar100 --adapter_latent 64 --optim sgd --compute_md --buffer_size 2000 --n_epochs 40 --lr 0.005 --batch_size 64 --use_buffer --class_order 0 --folder more_cifar100-20T
+
+### For Backward pass:
+
+python run.py --framework more --model deitadapter_more --n_tasks 20 --dataset cifar100 --adapter_latent 64 --optim sgd --compute_auc --buffer_size 2000 --folder more_cifar100-20T --load_dir logs/more_cifar100-20T --n_epochs 10 --print_filename model_backupdate.txt --use_buffer --load_task_id 19 --train_clf --train_clf_save_name model_backupdate --class_order 0
+
 # Testing
 
 ## testing BUILD models
-
+```
 python run.py --test --framework build --method build --model deitadapter_more --load_dir logs/build_cifar100-10T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder build_cifar100-10T --print_filename eval_build.txt --n_tasks 10
+```
 
 ## testing MORE models
 
 python run.py --test --framework build --method more_fw --model deitadapter_more --load_dir logs/more_cifar100-10T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder more_cifar100-10T --print_filename eval_more-fw.txt --n_tasks 10
 
 - for testing models after forward pass, method: more_fw
+
+python run.py --test --detector base --framework build --method more_fw --model deitadapter_more --load_dir logs/more_cifar100-20T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder more_cifar100-20T --print_filename eval_more-fw.txt --n_tasks 20
+
 - for testing models after backward pass, method: more_bw
 
-# For MORE implementation we keep their original script with minor edits
-
-## For Forward pass
-python run.py --framework more --model deitadapter_more --n_tasks 10 --dataset cifar100 --adapter_latent 64 --optim sgd --compute_md --compute_auc --buffer_size 2000 --n_epochs 40 --lr 0.001 --batch_size 64 --use_buffer --class_order 0 --folder more_cifar100-10T
-
-## For Backward pass:
-
-python run.py --framework more --model deitadapter_more --n_tasks 10 --dataset cifar100 --adapter_latent 64 --optim sgd --compute_auc --buffer_size 2000 --folder more_cifar100-10T --load_dir logs/more_cifar100-10T --n_epochs 10 --print_filename model_backupdate.txt --use_buffer --load_task_id 19 --train_clf --train_clf_save_name model_backupdate --class_order 0
+python run.py --test --detector base --framework build --method more_bw --model deitadapter_more --load_dir logs/more_cifar100-20T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder more_cifar100-20T --print_filename eval_more-bw.txt --n_tasks 20
 
 
 # Acknowledgement
