@@ -9,7 +9,9 @@ from apprs.basemodel import BaseModel
 import numpy as np
 # from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
+from utils.derpp_buffer import Buffer
+from torch.utils.data import DataLoader
+from utils.utils import *
 
 # device = "cuda:2" if torch.cuda.is_available() else "cpu"
 
@@ -37,22 +39,29 @@ class Derpp(BaseModel):
         self.args.alpha = args.set_alpha if args.set_alpha is not None else args.alpha
         self.args.beta = args.set_beta if args.set_beta is not None else args.beta
 
-    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        if self.args.dataset in ['imagenet', 'timgnet']:
+            self.buffer_dataset = Memory_ImageFolder(args)
+        else:
+            self.buffer_dataset = Memory(args)
 
+    def observe(self, inputs, labels, names, not_aug_inputs, f_y=None, **kwargs):
+        task_id = kwargs['task_id']
         self.opt.zero_grad()
 
-        outputs = self.net(inputs)
-
-        loss = self.loss(outputs, labels)
+        # outputs = self.net(inputs)
+        features, _ = self.net.forward_features(task_id, inputs, s=s)
+        outputs = self.net.forward_classifier(task_id, features)
+        # loss = self.loss(outputs, labels)
+        loss = self.criterion(outputs, labels)
 
         if not self.buffer.is_empty():
-            buf_inputs, _, buf_logits = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
+            buf_inputs, _, buf_logits = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device, mask_task_out=task_id, cpt=self.args.num_cls_per_task)
 
             buf_outputs = self.net(buf_inputs)
             loss_mse = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
             loss += loss_mse
 
-            buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
+            buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device, mask_task_out=task_id, cpt=(self.args.num_classes/self.args.n_tasks))
 
             buf_outputs = self.net(buf_inputs)
             loss_ce = self.args.beta * self.loss(buf_outputs, buf_labels)

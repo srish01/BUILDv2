@@ -4,11 +4,10 @@ from itertools import chain
 from copy import deepcopy
 import numpy as np
 import torch
-import clip
 import torchvision.transforms as transforms
 from torch.utils.data.dataset import Subset
 from datasets.cifar_mod import CIFAR100, CIFAR10
-from datasets.mnist3d import MNIST3D as MNIST
+# from datasets.mnist3d import MNIST3D as MNIST
 from custom_imagefolder import ImageFolder
 from datasets.class_split import ClassSplit
 

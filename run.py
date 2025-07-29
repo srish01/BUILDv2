@@ -113,6 +113,8 @@ if __name__ == '__main__':
         if args.model == 'vitadapter_more' or args.model == 'deitadapter_more':
             args.model_clip, args.clip_init = None, None
             from apprs.vitadapter import ViTAdapter as Model
+        elif args.model == 'derpp_deitadapter':
+            from apprs.derpp import Derpp as Model
 
     args.criterion = Criterion(args, args.net)
     
@@ -127,38 +129,42 @@ if __name__ == '__main__':
             # model.teacher_net = teacher_net       
 
     model.set_seed()
-    if args.framework == 'more' and args.load_dir is None:
-        args.train = True
-        model.training = True
-        train(task_list, args, train_data, test_data, model)      
-    elif args.framework == 'more' and args.train_clf:
-        args.train = True
-        model.training = True
-        from scripts.train_clf import train
-        train(task_list, args, train_data, test_data, model)      
-    else:
+    if 'derpp' in args.model or 'more' in args.model:
+        if args.load_dir is None:
+            args.train = True
+            model.training = True
+            train(task_list, args, train_data, test_data, model)      
+        elif args.train_clf:
+            args.train = True
+            model.training = True
+            from scripts.train_clf import train
+            train(task_list, args, train_data, test_data, model)  
+        elif args.test:
+            args.train = False
+            model.training = False
+            model.eval()
+            eval(args, model, train_data, test_data)
+    elif 'build' in args.model:
         # if args.framework == 'build' and args.load_dir is None:
-        if args.framework == 'build' and args.train:
+        if args.train:
             args.train = True
             model.training = True
             train_build(task_list, args, train_data, model)       
-        elif args.framework == 'build' and args.val:
+        elif args.val:
             args.train = False
             model.training = False
             model.eval()
             from hyperparam import search_hyperparam     
             search_hyperparam(args, model, train_data) 
-        elif args.framework == 'build' and args.test:
+        elif args.test:
             args.train = False
             model.training = False
             model.eval()
-            if args.farood:
-                from testing_build import test_farood
-                test_farood(args, train_data, farood_data, model) 
-            else:
-                from scripts.eval import eval
-                model.eval()
-                eval(args, model, train_data, test_data)   # eval for both more and build  
+            # if args.farood:
+            #     from testing_build import test_farood
+            #     test_farood(args, train_data, farood_data, model) 
+            # else:
+            eval(args, model, train_data, test_data)   # eval for both more and build  
      
             
     usage = resource.getrusage(resource.RUSAGE_SELF)
