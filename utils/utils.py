@@ -258,8 +258,11 @@ def _print_results(task_id, mat, print=print, type='acc'):
                 else:
                     print("\t", end='', date=False)
             print("]    ", end='', date=False)
-            print(f"ACA(t= {i})={mat[i, -1]:.2f}", date=False)
-        print(f"> AIA: {mat[-1, -1]:.2f}", date=False)
+            aca = mat[i, -1]
+            print(f"ACA(t= {i})={aca:.2f}", date=False)
+        aia = mat[-1, -1]
+        print(f"> AIA: {aia:.2f}", date=False)
+        return aca, aia
     # elif type == 'det_acc':
     #     print(f'> Task id Prediction Accuracy', date=False)
     #     for i in range(task_id + 1):
@@ -284,9 +287,12 @@ def _print_results(task_id, mat, print=print, type='acc'):
             else:
                 print("\t", end='', date=False)
         print("]", end='', date=False)
+        avg_forget = None
         if task_id > 0:
-            forget = np.mean(mat[-1, :task_id])
-            print(f"Avg Forgetting: {forget:.2f}", date=False)
+            avg_forget = np.mean(mat[-1, :task_id])
+            print(f"Avg Forgetting: {avg_forget:.2f}", date=False)
+        return avg_forget
+
     else:
         raise NotImplementedError("Type must be either 'acc', 'forget' or 'det_acc'")
 
@@ -318,7 +324,8 @@ class Tracker:
     def print_result(self, task_id, type='acc', print=None):
         if self.print:
             print = self.print
-        _print_results(task_id=task_id, mat=self.mat, print=print, type=type)
+        return _print_results(task_id=task_id, mat=self.mat, print=print, type=type)
+
         # if print is None: print = self.print
         # if type == 'acc':
         #     # Print accuracy
@@ -446,6 +453,7 @@ class OWTracker:
             #     print("\t", end='')
             # print("{:.2f}".format(self.mat[-1, -1]))
             print(f"> Inc. {type.upper()}: {self.mat[-1, -1]:.2f}", date=False)
+            return self.mat[-1, -1]
             # print("{:.2f}".format(self.mat[-1, -1]))
         else:
             raise NotImplementedError("Type must be 'auc'")
@@ -909,13 +917,11 @@ def collect_test_scores(args, model, method, train_data, test_data, **kwargs):
 
         if method == 'more_fw':
             test_model_name = f'/model_task_{eval_model}'
-            c = 20
         elif method == 'more_bw':
             test_model_name = f'/model_backupdate_{eval_model}'
-            c = 20
         elif method == 'build':
             test_model_name = f'/buildv2_model_{eval_model}'
-            c = 20
+        c = 20
         
         t_train = train_data.make_dataset(eval_model)
         train_loaders.append(make_loader(t_train, args, train = 'train'))
@@ -958,6 +964,10 @@ def collect_test_scores(args, model, method, train_data, test_data, **kwargs):
             test_loader = make_loader(t_test, args, train = 'test')
 
             for t in range(eval_model+1):
+                # if "derpp" in args.model:
+                #     args.logger.print(f'Using non-multi head, skipping head {t}')
+                #     continue
+
                 args.logger.print(f'### on head: {t}')
 
                 # if method == 'more_bw':
@@ -975,8 +985,10 @@ def collect_test_scores(args, model, method, train_data, test_data, **kwargs):
                 
                 # args.logger.print(f'loading fc layer from: {fc_file}')
                 # fc_w, fc_b = get_fc_w_b(args, fc_file)
-                fc_w = model.net.state_dict()[f'head.{t}.weight'].detach().cpu().numpy()
-                fc_b = model.net.state_dict()[f'head.{t}.bias'].detach().cpu().numpy()
+                
+                head_name = f"head.{t}" if "more" in args.model else "head"
+                fc_w = model.net.state_dict()[f'{head_name}.weight'].detach().cpu().numpy()
+                fc_b = model.net.state_dict()[f'{head_name}.bias'].detach().cpu().numpy()
                 cov = np.load(args.load_dir + f'/cov_task_{t}.npy')
                 cov_inv = np.linalg.inv(cov)
                 for y in range(t * args.num_cls_per_task, (t + 1) * args.num_cls_per_task):
@@ -990,11 +1002,18 @@ def collect_test_scores(args, model, method, train_data, test_data, **kwargs):
                     
                     with torch.no_grad():
                         model.net.eval()
-                        features, _ = model.net.forward_features(t, x, s=args.smax)
-                        logits = model.net.forward_classifier(t, features)
-                        # logits = torch.matmul(features, fc_w.T.to(args.device)) + fc_b.to(args.device)
-                        topk_scores = torch.softmax(logits, dim=1)[:, :args.num_cls_per_task] # QUESTIONABLE: why top k?
-                        # topk_scores = torch.softmax(logits, dim=1)[:, t * args.num_cls_per_task: (t+1) * args.num_cls_per_task]  
+                        if "derpp" in args.model:
+                            features = model.net.forward_features(x)
+                            logits = model.net.forward_classifier(features)
+                            # topk_scores = torch.softmax(logits, dim=1)[:, :args.num_cls_per_task]   # TODO: wrong
+                            topk_scores = torch.softmax(logits, dim=1)[:, t * args.num_cls_per_task: (t + 1) * args.num_cls_per_task]
+                            # this is to treat non-multi head models such as DER++ as multi-head. Slower but 100% compatible at least...
+                        else:
+                            features, _ = model.net.forward_features(t, x, s=args.smax)
+                            logits = model.net.forward_classifier(t, features)
+                            # logits = torch.matmul(features, fc_w.T.to(args.device)) + fc_b.to(args.device)
+                            topk_scores = torch.softmax(logits, dim=1)[:, :args.num_cls_per_task] # QUESTIONABLE: why top k?
+                            # topk_scores = torch.softmax(logits, dim=1)[:, t * args.num_cls_per_task: (t+1) * args.num_cls_per_task]  
                         sm_scores, sm_pred = torch.max(topk_scores, dim=1)
 
                         md_list, dist = [], 0

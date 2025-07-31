@@ -54,7 +54,11 @@ def get_react_logits(args, model, t, test_activations, thresh):
     r_activations = r_activations.view(r_activations.size(0), -1)
     # args.logger.print(f'[react] fc_file: {fc_file}')
     # r_logits = my_fc(args, model, r_activations, t)
-    r_logits = model.net.head[t](r_activations)
+    if "more" in args.model:
+        r_logits = model.net.head[t](r_activations)
+    else:
+        # TODO: modified here
+        r_logits = model.net.head(r_activations)[:, t * args.num_cls_per_task : (t + 1) * args.num_cls_per_task]
     return r_logits, r_activations
 
 def dice_calculate_mask(args, mean_act, w, p):
@@ -69,7 +73,13 @@ def get_ashb_logits(args, model, test_activations, percentile, t):
     ash_act = ash_b(test_activations.view(test_activations.size(0), -1, 1, 1), percentile)
     ash_act = ash_act.view(ash_act.size(0), -1)
     # ash_logits = my_fc(args, ash_act.cpu(), fc_file)
-    ash_logits = model.net.head[t](ash_act)
+    # ash_logits = model.net.head[t](ash_act)
+
+    if "more" in args.model:
+        ash_logits = model.net.head[t](ash_act)
+    else:
+        # TODO: modified here
+        ash_logits = model.net.head(ash_act)[:, t * args.num_cls_per_task : (t + 1) * args.num_cls_per_task]
     return ash_logits
 
 
@@ -78,7 +88,12 @@ def get_scale_logits(args, model, test_activations, percentile, t):
     scale_act = scale_act.view(scale_act.size(0), -1)
     # args.logger.print(f'[scale] fc_file: {fc_file}')
     # scale_logits = my_fc(args, model, scale_act.cpu(), t)
-    scale_logits = model.net.head[t](scale_act)
+    # scale_logits = model.net.head[t](scale_act)
+    if "more" in args.model:
+        scale_logits = model.net.head[t](scale_act)
+    else:
+        # TODO: modified here
+        scale_logits = model.net.head(scale_act)[:, t * args.num_cls_per_task : (t + 1) * args.num_cls_per_task]
     return scale_logits
 
 

@@ -25,7 +25,7 @@ if __name__ == '__main__':
     args = parse_args()
     args.logger = Logger(args, args.folder)
     args.logger.now()
-    device = "cuda:2" if torch.cuda.is_available() else "cpu"
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     # Assign None to feature extractors
     args.model_clip, args.model_vit = None, None
     id_dataset = args.dataset
@@ -113,10 +113,15 @@ if __name__ == '__main__':
         if args.model == 'vitadapter_more' or args.model == 'deitadapter_more':
             args.model_clip, args.clip_init = None, None
             from apprs.vitadapter import ViTAdapter as Model
+        
+        if args.model == 'derpp_deitadapter':
+            args.model_clip, args.clip_init = None, None
+            from apprs.derpp import Derpp as Model
 
     args.criterion = Criterion(args, args.net)
-    
     model = Model(args)
+
+    
     # model called ViTAdapeter has two parameters: criterion: crossentropy loss and net: MyVisionTransformer (stored as args.net)
     if args.distillation:
         if args.model in ['vitadapter', 'clipadapter', 'clipadapter_hat']:

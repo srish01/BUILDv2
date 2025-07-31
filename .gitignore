@@ -1,0 +1,17 @@
+.idea
+
+nohup.out
+deit_pretrained
+/cifar-10-python.tar.gz
+heavy_data
+/data/
+figures
+/cifar-10-batches-py/batches.meta
+/logs/
+networks/__pycache__
+clip/__pycache__
+__pycache__/
+__pycache__/*
+pycache
+clip/__pycache__/__init__.cpython-38.pyc
+clip/__pycache__/clip.cpython-38.pyc

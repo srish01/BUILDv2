@@ -8,7 +8,7 @@ import clip
 import torchvision.transforms as transforms
 from torch.utils.data.dataset import Subset
 from datasets.cifar_mod import CIFAR100, CIFAR10
-from datasets.mnist3d import MNIST3D as MNIST
+# from datasets.mnist3d import MNIST3D as MNIST
 from custom_imagefolder import ImageFolder
 from datasets.class_split import ClassSplit
 
@@ -87,7 +87,7 @@ def augmentations(args):
         args.logger.print('Using augmentations of ViT')
         model_type = 'deit_small_patch16_224' # model_type can be anything as long as it's ViT or Deit
         # model_ = timm.create_model(model_type, pretrained=False, num_classes=1).cuda()                             # EDIT: commented
-        model_ = timm.create_model(model_type, pretrained=False, num_classes=1).to(device)                           # EDIT: change cuda to .to(device)
+        model_ = timm.create_model(model_type, pretrained=False, num_classes=1).to(args.device)                           # EDIT: change cuda to .to(device)
 
         # from networks.my_vit import deit_small_patch16_224 as transformer
         # from timm.data import resolve_data_config
