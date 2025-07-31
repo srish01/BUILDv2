@@ -181,7 +181,7 @@ def eval(args, model, train_data, test_data):
     full_df['scorer'] = pd.Categorical(full_df['scorer'], categories=['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores'], ordered=True)
     full_df['detector'] = pd.Categorical(full_df['detector'], categories=detector, ordered=True)
     full_df_sorted = full_df.sort_values(by=['scorer', 'detector']).reset_index(drop=True)
-
+    full_df_sorted.to_csv(os.path.join(args.load_dir, "full_results.csv"))
     time_elapsed = datetime.now() - start_time 
     print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
 
