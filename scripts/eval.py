@@ -49,7 +49,8 @@ def eval_InDistribution(args, detector, method):
                 labels = base[d, 0]['gt']
 
                 for t in range(eval_model+ 1):
-                    sm_pred.append(det[d, t]['sm_pred'])
+                    # sm_pred.append(det[d, t]['sm_pred'])
+                    sm_pred.append(base[d, t]['sm_pred'])
                     scores.append(det[d, t][scorer])
 
                 all_scores = np.column_stack(scores)
