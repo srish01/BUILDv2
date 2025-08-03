@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Training DERPP",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "args": "--model derpp_deitadapter --set_alpha 0.5 --set_beta 0.5 --n_tasks 5 --dataset cifar10 --optim sgd --compute_md --compute_auc --use_buffer --buffer_size 200 --n_epochs 20 --lr 0.005 --batch_size 64 --class_order 0 --folder derpp_cifar10-5T",
+            "justMyCode": false
+        },
+        {
+            "name": "eval BUILDv2",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "args": "--test --framework build --method build --model deitadapter_more --load_dir logs/build_cifar10-5T --dataset cifar10 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder build_cifar10-5T --print_filename eval_build.txt --n_tasks 5",
+            "justMyCode": false
+        },
+    ]
+}

@@ -44,7 +44,10 @@ def train_build(task_list, args, train_data, model):
             for b, (x, y, f_y, names, orig) in tqdm(enumerate(train_loader)):
                 f_y = f_y[:, 1]
                 x, y = x.to(args.device), y.to(args.device)
-                loss = model.observe(x, y, names, x, f_y, task_id=task_id, b=b, B=len(train_loader))        # EDIT: changed from train_loaders[-1] to train_loader
+                if "more" in args.model:
+                    loss = model.observe(x, y, names, x, f_y, task_id=task_id, b=b, B=len(train_loader))        # EDIT: changed from train_loaders[-1] to train_loader
+                elif "derpp" in args.model:
+                    loss = model.observe(x, y, epoch=epoch, not_aug_inputs=x)
 
                 total_loss_list.append(loss) 
                 task_loss_list.append(loss)
@@ -79,8 +82,13 @@ def train_build(task_list, args, train_data, model):
                     # normalized_labels = y % args.num_cls_per_task
                     with torch.no_grad():
                         model.net.eval()
-                        features, _ = model.net.forward_features(task_id, x, s = args.smax)
-                        logits = model.net.forward_classifier(task_id, features)[:, task_id * args.num_cls_per_task: (task_id+1) * args.num_cls_per_task]
+                        if "more" in args.model:
+                            features, _ = model.net.forward_features(task_id, x, s = args.smax)
+                            logits = model.net.forward_classifier(task_id, features)[:, task_id * args.num_cls_per_task: (task_id+1) * args.num_cls_per_task]
+                        else:
+                            features = model.net.forward_features(x)
+                            logits = model.net.forward_classifier(features)
+
                         # score, pred = torch.max(torch.softmax(logits, dim=1), dim=1)
                         
                         collect_gt.append(y.data.cpu().numpy().tolist())
@@ -141,8 +149,16 @@ def train_build(task_list, args, train_data, model):
                 if f'head.{task_id}.weight' in model.net.state_dict():
                     weight = model.net.state_dict()[f'head.{task_id}.weight'].detach().cpu().numpy()
                     bias = model.net.state_dict()[f'head.{task_id}.bias'].detach().cpu().numpy()
-                # np.savez(args.logger.dir() + f'fc_layer_model_{task_id}', weight=weight, bias=bias)
-                np.savez(args.logger.dir() + f'fc_layer_model_m{task_id}', weight=weight, bias=bias)
+                    # np.savez(args.logger.dir() + f'fc_layer_model_{task_id}', weight=weight, bias=bias)
+                    np.savez(args.logger.dir() + f'fc_layer_model_m{task_id}', weight=weight, bias=bias)
+                elif f'head.weight' in model.net.state_dict():
+                    weight = model.net.state_dict()[f'head.weight'].detach().cpu().numpy()
+                    bias = model.net.state_dict()[f'head.bias'].detach().cpu().numpy()
+                    # Take into account the task id anyway bacause the whole head change every time
+                    np.savez(args.logger.dir() + f'fc_layer_model_m{task_id}', weight=weight, bias=bias)
+                else:
+                    args.logger.print("Head weights not found...")
+
                 
                 if (epoch + 1) == args.n_epochs:
                     args.logger.print("End task...")

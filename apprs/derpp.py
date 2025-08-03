@@ -33,16 +33,15 @@ class Derpp(BaseModel):
     #     super().__init__(backbone, loss, args, transform, dataset=dataset)
     def __init__(self, args):
         super(Derpp, self).__init__(args)
-        self.device = "cuda:2" if torch.cuda.is_available() else "cpu"
+        self.device = args.device
+
+        # TODO: this should be generalized depending on the backbone
+        # Overwrite optimizer to only train adapters
+        self.optimizer = torch.optim.SGD(self.net.adapter_parameters(), lr=self.args.lr, momentum=self.args.momentum)
         self.buffer = Buffer(self.args.buffer_size, self.device)
 
         self.args.alpha = args.set_alpha if args.set_alpha is not None else args.alpha
         self.args.beta = args.set_beta if args.set_beta is not None else args.beta
-
-        if self.args.dataset in ['imagenet', 'timgnet']:
-            self.buffer_dataset = Memory_ImageFolder(args)
-        else:
-            self.buffer_dataset = Memory(args)
 
     def observe(self, inputs, labels, names, not_aug_inputs, f_y=None, **kwargs):
         task_id = kwargs['task_id']
@@ -56,25 +55,46 @@ class Derpp(BaseModel):
 
         if not self.buffer.is_empty():
             buf_inputs, _, buf_logits = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device, mask_task_out=task_id, cpt=self.args.num_cls_per_task)
-
             buf_outputs = self.net(buf_inputs)
-            loss_mse = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
+
+            loss_mse = self.args.alpha * F.mse_loss(buf_outputs, torch.stack(buf_logits))
             loss += loss_mse
 
-            buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device, mask_task_out=task_id, cpt=(self.args.num_classes/self.args.n_tasks))
+            # buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.batch_size, device=self.device)
+            # buf_outputs = self.net(buf_inputs)
 
-            buf_outputs = self.net(buf_inputs)
-            loss_ce = self.args.beta * self.loss(buf_outputs, buf_labels)
+
+            loss_ce = self.args.beta * self.criterion(buf_outputs, buf_labels)
             loss += loss_ce
 
         loss.backward()
-        self.opt.step()
+        self.optimizer.step()
 
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels,
                              logits=outputs.data)
+        
+        n_samples = len(inputs)
+        scores, pred = outputs.max(1)
+        # self.scores.append(scores.detach().cpu().numpy())
+        self.correct += pred.eq(labels).sum().item()
+        self.total += n_samples
 
         return loss.item()
+    
+
+    def save(self, **kwargs):
+        """
+            Save model specific elements required for resuming training
+            kwargs: e.g. model state_dict, optimizer state_dict, epochs, etc.
+        """
+        self.saving_buffer['buffer'] = self.buffer
+
+        for key in kwargs:
+            self.saving_buffer[key] = kwargs[key]
+
+        torch.save(self.saving_buffer, self.args.logger.dir() + 'saving_buffer')
+    
     
     def set_seed(self):
         seed=self.args.seed

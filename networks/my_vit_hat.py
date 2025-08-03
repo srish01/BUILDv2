@@ -39,7 +39,7 @@ from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_n
 from timm.models.registry import register_model
 
 _logger = logging.getLogger(__name__)
-device = "cuda:2" if torch.cuda.is_available() else "cpu"
+# device = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 def _cfg(url='', **kwargs):
     return {
@@ -244,8 +244,9 @@ class Adapter(nn.Module):
         return out
 
     def append_embedddings(self):
-        self.ec1.append(nn.Parameter(torch.randn(1, self.out_dim, device=device)))
-        self.ec2.append(nn.Parameter(torch.randn(1, self.in_dim, device=device)))
+        _device = next(self.parameters()).device
+        self.ec1.append(nn.Parameter(torch.randn(1, self.out_dim, device=_device)))
+        self.ec2.append(nn.Parameter(torch.randn(1, self.in_dim, device=_device)))
 
 class Block(nn.Module):
 
@@ -445,8 +446,9 @@ class MyVisionTransformer(nn.Module):
         return x
 
     def append_embedddings(self):
+        _device = next(self.parameters()).device
         # append head
-        self.head.append(nn.Linear(self.embed_dim, self.num_classes).to(device))        # changed from.cuda() to .to(device)
+        self.head.append(nn.Linear(self.embed_dim, self.num_classes).to(_device))        # changed from.cuda() to .to(device)
 
         self.list_norm.append(deepcopy(self.norm))
         for b in self.blocks:
