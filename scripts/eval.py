@@ -109,16 +109,17 @@ def eval_nOOD_performance(args, detector, method):
             fname = os.path.join(args.load_dir + f'/m{eval_model}_test_scores_{method}.npz')
             # args.logger.print(f'Loading scores from file: {fname}')
             out = np.load(fname, allow_pickle=True)
-            base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
-
-            if detector == 'base':
-                det = base
-            elif detector == 'react':
-                det = react
-            elif detector == 'dice':
-                det = dice
-            elif detector == 'scale':
-                det = scale
+            # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
+            
+            det = out[detector].tolist()
+            # if detector == 'base':
+            #     det = base
+            # elif detector == 'react':
+            #     det = react
+            # elif detector == 'dice':
+            #     det = dice
+            # elif detector == 'scale':
+            #     det = scale
 
             in_scores, out_scores, out_data_id = [], [], []
 
