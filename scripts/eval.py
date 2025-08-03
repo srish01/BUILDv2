@@ -6,6 +6,7 @@ from utils.ood_eval import accuracy
 import json
 # from scipy.spatial.distance import mahalanobis
 import csv
+import pandas as pd
 
     
     
@@ -15,16 +16,20 @@ def eval_InDistribution(args, detector, method):
     args.logger.print(f'\n**** Evaluating InDistribution performance on: {method.upper()} ****')
     
     
-    if detector == 'base':
-        scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores', 'logit_scores', 'maha_dist']
-    elif detector in ['react', 'dice', 'scale']:
-        scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
-    else:
-        NotImplementedError(f'{detector} not implemented')
+    # if detector == 'base':
+    #     scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores', 'logit_scores', 'maha_dist']
+    # elif detector in ['react', 'dice', 'scale']:
+    #     scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
+    # else:
+    #     NotImplementedError(f'{detector} not implemented')
 
-    header = ['scorer', 'ACA', 'AIA', 'AF']
+    scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
+    header = ['detector', 'scorer', 'ACA', 'AIA', 'AF']
+    df = pd.DataFrame(columns=header)
+    df.set_index('scorer', inplace=True)
 
-    
+
+    # cil_res_dict = {}
     for scorer in scoring:
         args.logger.print(f'\n      Detector: {detector}\n     Scoring Function: {scorer}')
         cil_tracker = {}
@@ -34,8 +39,10 @@ def eval_InDistribution(args, detector, method):
             fname = os.path.join(args.load_dir + f'/m{eval_model}_test_scores_{method}.npz')
             out = np.load(fname, allow_pickle=True)
             # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
+
             det = out[detector].tolist()
             base = out['base'].tolist()
+
             # if detector == 'base':
             #     det = base
             # elif detector == 'react':
@@ -50,8 +57,7 @@ def eval_InDistribution(args, detector, method):
                 labels = base[d, 0]['gt']
 
                 for t in range(eval_model+ 1):
-                    # sm_pred.append(det[d, t]['sm_pred'])
-                    sm_pred.append(base[d, t]['sm_pred'])       # debug because of this change
+                    sm_pred.append(det[d, t]['sm_pred'])
                     scores.append(det[d, t][scorer])
 
                 all_scores = np.column_stack(scores)
@@ -65,12 +71,16 @@ def eval_InDistribution(args, detector, method):
         
         args.logger.print("######################")
         args.logger.print(f'{detector}: {scorer}: CIL result')
-        cil_accuracy.print_result(t, type = 'acc')    
-        cil_accuracy.print_result(t, type = 'forget')
-            
-        cil_tracker[scorer] = cil_accuracy
-
-    return cil_tracker
+        lca, aia = cil_accuracy.print_result(t, type = 'acc')    
+        avg_f = cil_accuracy.print_result(t, type = 'forget')
+        
+        df.loc[scorer] = [detector, lca, aia, avg_f]
+        # df.index = df.index + 1
+        # df = df.sort_index(ascending=False)
+        # cil_tracker[scorer] = cil_accuracy
+    # return cil_tracker
+    df = df.reset_index()
+    return df
             
 
 
@@ -78,12 +88,17 @@ def eval_nOOD_performance(args, detector, method):
     args.logger.print(f'\n**** Evaluating N-OOD performance on: {method.upper()} ****')
     # detector = args.detector
     
-    if detector == 'base':
-        scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores', 'logit_scores', 'maha_dist']
-    elif detector in ['react', 'dice', 'scale']:
-        scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
-    else:
-        NotImplementedError(f'{detector} not implemented')
+    # if detector == 'base':
+    #     scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores', 'logit_scores', 'maha_dist']
+    # elif detector in ['react', 'dice', 'scale']:
+    #     scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
+    # else:
+    #     NotImplementedError(f'{detector} not implemented')
+
+    scoring = ['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores']
+    header = ['detector', 'scorer', 'AUC', 'AUPR']
+    df = pd.DataFrame(columns=header)
+    df.set_index('scorer', inplace=True)
 
     for scorer in scoring:
         args.logger.print(f'\n      Detector: {detector}\n     Scoring Function: {scorer}')
@@ -97,6 +112,14 @@ def eval_nOOD_performance(args, detector, method):
             # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
             
             det = out[detector].tolist()
+            # if detector == 'base':
+            #     det = base
+            # elif detector == 'react':
+            #     det = react
+            # elif detector == 'dice':
+            #     det = dice
+            # elif detector == 'scale':
+            #     det = scale
 
             in_scores, out_scores, out_data_id = [], [], []
 
@@ -124,14 +147,16 @@ def eval_nOOD_performance(args, detector, method):
         
         args.logger.print("######################")
         args.logger.print(f'{detector}: {scorer} scores: AUC')
-        Auc.print_result(eval_model, type='auc')
+        auc = Auc.print_result(eval_model, type='auc')
         args.logger.print(f'{detector}: {scorer} scores: AUPR')
-        Aupr.print_result(eval_model, type='aupr')
+        aupr = Aupr.print_result(eval_model, type='aupr')
 
-        auc_tracker[scorer] = Auc
-        aupr_tracker[scorer] = Aupr
-
-    return auc_tracker, aupr_tracker
+        df.loc[scorer] = [detector, auc, aupr]
+    df = df.reset_index()
+    return df
+    #     auc_tracker[scorer] = Auc
+    #     aupr_tracker[scorer] = Aupr
+    # return auc_tracker, aupr_tracker
 
 
 
@@ -143,15 +168,24 @@ def eval(args, model, train_data, test_data):
     method = args.method
     detector = ['base', 'react', 'dice', 'scale']
     collect_test_scores(args, model, method, train_data, test_data)
+    full_df = None
     for det in detector:
-        cil_tracker = eval_InDistribution(args, det, method)
-        auc_tracker, aupr_tracker = eval_nOOD_performance(args, det, method)
+        cil_df = eval_InDistribution(args, det, method)
+        ood_df = eval_nOOD_performance(args, det, method)
         # with open(args.load_dir + f'/cil_tracker_{args.method}_{args.dataset}-{args.n_tasks}T_{det}.json', "w") as out:
         #     json.dump(cil_tracker, out, indent = 4)
         # with open(args.load_dir + f'/auc_tracker_{args.method}_{args.dataset}-{args.n_tasks}T_{det}.json', "w") as out:
         #     json.dump(auc_tracker, out, indent = 4)
         # with open(args.load_dir + f'/aupr_tracker_{args.method}_{args.dataset}-{args.n_tasks}T_{det}.json', "w") as out:
         #     json.dump(aupr_tracker, out, indent = 4)
+        print("")
+        df = pd.merge(cil_df, ood_df, on=['scorer', 'detector'])
+        full_df = df if full_df is None else pd.concat([full_df, df], ignore_index=True)
+    
+    full_df['scorer'] = pd.Categorical(full_df['scorer'], categories=['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores'], ordered=True)
+    full_df['detector'] = pd.Categorical(full_df['detector'], categories=detector, ordered=True)
+    full_df_sorted = full_df.sort_values(by=['scorer', 'detector']).reset_index(drop=True)
+    full_df_sorted.to_csv(os.path.join(args.load_dir, "full_results.csv"))
     time_elapsed = datetime.now() - start_time 
     print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
 
