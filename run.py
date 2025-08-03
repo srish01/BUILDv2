@@ -129,44 +129,39 @@ if __name__ == '__main__':
             # model.teacher_net = teacher_net       
 
     model.set_seed()
-    if 'derpp' in args.model or 'more' in args.model:
-        if args.load_dir is None:
-            args.train = True
-            model.training = True
-            train(task_list, args, train_data, test_data, model)      
-        elif args.train_clf:
-            args.train = True
-            model.training = True
-            from scripts.train_clf import train
-            train(task_list, args, train_data, test_data, model)  
-        elif args.test:
-            args.train = False
-            model.training = False
-            model.eval()
-            eval(args, model, train_data, test_data)
-    elif 'build' in args.model:
+    if args.framework == 'more' and args.load_dir is None:
+        args.train = True
+        model.training = True
+        train(task_list, args, train_data, test_data, model)      
+    elif args.framework == 'more' and args.train_clf:
+        args.train = True
+        model.training = True
+        from scripts.train_clf import train
+        train(task_list, args, train_data, test_data, model)      
+    else:
         # if args.framework == 'build' and args.load_dir is None:
-        if args.train:
+        if args.framework == 'build' and args.train:
             args.train = True
             model.training = True
             train_build(task_list, args, train_data, model)       
-        elif args.val:
+        elif args.framework == 'build' and args.val:
             args.train = False
             model.training = False
             model.eval()
             from hyperparam import search_hyperparam     
             search_hyperparam(args, model, train_data) 
-        elif args.test:
+        elif args.framework == 'build' and args.test:
             args.train = False
             model.training = False
             model.eval()
-            # if args.farood:
-            #     from testing_build import test_farood
-            #     test_farood(args, train_data, farood_data, model) 
-            # else:
-            eval(args, model, train_data, test_data)   # eval for both more and build  
-     
-            
+            if args.farood:
+                from testing_build import test_farood
+                test_farood(args, train_data, farood_data, model) 
+            else:
+                from scripts.eval import eval
+                model.eval()
+                eval(args, model, train_data, test_data)   # eval for both more and build
+
     usage = resource.getrusage(resource.RUSAGE_SELF)
     max_mem = usage.ru_maxrss  # in kilobytes on most Unix
     args.logger.print(f"Max memory usage: {max_mem / 1024:.2f} MB")

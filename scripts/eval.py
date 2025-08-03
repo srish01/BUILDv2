@@ -33,17 +33,17 @@ def eval_InDistribution(args, detector, method):
         for eval_model in range(args.n_tasks):
             fname = os.path.join(args.load_dir + f'/m{eval_model}_test_scores_{method}.npz')
             out = np.load(fname, allow_pickle=True)
-            base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
-            # det = out[detector].tolist()
-            # base = out['base'].tolist()
-            if detector == 'base':
-                det = base
-            elif detector == 'react':
-                det = react
-            elif detector == 'dice':
-                det = dice
-            elif detector == 'scale':
-                det = scale
+            # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
+            det = out[detector].tolist()
+            base = out['base'].tolist()
+            # if detector == 'base':
+            #     det = base
+            # elif detector == 'react':
+            #     det = react
+            # elif detector == 'dice':
+            #     det = dice
+            # elif detector == 'scale':
+            #     det = scale
         
             for d in range(eval_model+ 1):
                 scores, sm_pred, smmd_pred = [], [], []
