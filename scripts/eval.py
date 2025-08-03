@@ -39,25 +39,16 @@ def eval_InDistribution(args, detector, method):
             fname = os.path.join(args.load_dir + f'/m{eval_model}_test_scores_{method}.npz')
             out = np.load(fname, allow_pickle=True)
             # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
-
             det = out[detector].tolist()
             base = out['base'].tolist()
-
-            # if detector == 'base':
-            #     det = base
-            # elif detector == 'react':
-            #     det = react
-            # elif detector == 'dice':
-            #     det = dice
-            # elif detector == 'scale':
-            #     det = scale
-        
+            
             for d in range(eval_model+ 1):
                 scores, sm_pred, smmd_pred = [], [], []
                 labels = base[d, 0]['gt']
 
                 for t in range(eval_model+ 1):
-                    sm_pred.append(det[d, t]['sm_pred'])
+                    # sm_pred.append(det[d, t]['sm_pred'])
+                    sm_pred.append(base[d, t]['sm_pred'])       # debug because of this change
                     scores.append(det[d, t][scorer])
 
                 all_scores = np.column_stack(scores)
@@ -112,14 +103,6 @@ def eval_nOOD_performance(args, detector, method):
             # base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
             
             det = out[detector].tolist()
-            # if detector == 'base':
-            #     det = base
-            # elif detector == 'react':
-            #     det = react
-            # elif detector == 'dice':
-            #     det = dice
-            # elif detector == 'scale':
-            #     det = scale
 
             in_scores, out_scores, out_data_id = [], [], []
 

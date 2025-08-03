@@ -4,7 +4,6 @@ from itertools import chain
 from copy import deepcopy
 import numpy as np
 import torch
-import clip
 import torchvision.transforms as transforms
 from torch.utils.data.dataset import Subset
 from datasets.cifar_mod import CIFAR100, CIFAR10

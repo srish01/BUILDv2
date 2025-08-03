@@ -163,9 +163,8 @@ if __name__ == '__main__':
             else:
                 from scripts.eval import eval
                 model.eval()
-                eval(args, model, train_data, test_data)   # eval for both more and build  
-     
-            
+                eval(args, model, train_data, test_data)   # eval for both more and build
+
     usage = resource.getrusage(resource.RUSAGE_SELF)
     max_mem = usage.ru_maxrss  # in kilobytes on most Unix
     args.logger.print(f"Max memory usage: {max_mem / 1024:.2f} MB")

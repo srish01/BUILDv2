@@ -65,8 +65,6 @@ python run.py --test --framework build --method build --model deitadapter_more -
 
 ## testing MORE models
 
-python run.py --test --framework build --method more_fw --model deitadapter_more --load_dir logs/more_cifar100-10T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder more_cifar100-10T --print_filename eval_more-fw.txt --n_tasks 10
-
 - for testing models after forward pass, method: more_fw
 
 python run.py --test --detector base --framework build --method more_fw --model deitadapter_more --load_dir logs/more_cifar100-20T --dataset cifar100 --test_batch_size 32 --adapter_latent 64 --optim sgd --folder more_cifar100-20T --print_filename eval_more-fw.txt --n_tasks 20
