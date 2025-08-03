@@ -4,7 +4,7 @@ from utils.best_args import best_args
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--root', type=str, default='./')
-    parser.add_argument('--device', type=str, default='cuda:2')
+    parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--detector', type=str, default='base', choices=['base', 'react', 'dice', 'scale'])
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--val', action='store_true')

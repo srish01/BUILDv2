@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from collections import Counter
 
 
-device = "cuda:2" if torch.cuda.is_available() else "cpu"
+# device = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 class ViTAdapter(BaseModel):
     def __init__(self, args):
@@ -66,9 +66,9 @@ class ViTAdapter(BaseModel):
                 # self.buffer_iter = iter(self.buffer)
                 inputs_bf, labels_bf = next(self.buffer_iter)
 
-            inputs_bf = inputs_bf.to(device)
+            inputs_bf = inputs_bf.to(self.args.device)
             # single dummy head
-            labels_bf = torch.zeros_like(labels_bf).to(device) + self.num_cls_per_task
+            labels_bf = torch.zeros_like(labels_bf).to(self.args.device) + self.num_cls_per_task
             normalized_labels_bf = labels_bf
             inputs = torch.cat([inputs, inputs_bf])
             labels = torch.cat([labels, labels_bf])
@@ -557,7 +557,7 @@ class ViTAdapter(BaseModel):
         except AttributeError:
             self.net = self.net
 
-        task_id = torch.tensor([t]).to(device)
+        task_id = torch.tensor([t]).to(self.args.device)
         mask = {}
         for n, _ in self.net.named_parameters():
             names = n.split('.')
