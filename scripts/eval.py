@@ -34,7 +34,8 @@ def eval_InDistribution(args, detector, method):
             fname = os.path.join(args.load_dir + f'/m{eval_model}_test_scores_{method}.npz')
             out = np.load(fname, allow_pickle=True)
             base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
-
+            # det = out[detector].tolist()
+            # base = out['base'].tolist()
             if detector == 'base':
                 det = base
             elif detector == 'react':
@@ -50,7 +51,7 @@ def eval_InDistribution(args, detector, method):
 
                 for t in range(eval_model+ 1):
                     # sm_pred.append(det[d, t]['sm_pred'])
-                    sm_pred.append(base[d, t]['sm_pred'])
+                    sm_pred.append(base[d, t]['sm_pred'])       # debug because of this change
                     scores.append(det[d, t][scorer])
 
                 all_scores = np.column_stack(scores)
@@ -94,7 +95,7 @@ def eval_nOOD_performance(args, detector, method):
             # args.logger.print(f'Loading scores from file: {fname}')
             out = np.load(fname, allow_pickle=True)
             base, react, dice, scale = out['base'].tolist(), out['react'].tolist(), out['dice'].tolist(), out['scale'].tolist()
-
+            # det = out[detector].tolist()
             if detector == 'base':
                 det = base
             elif detector == 'react':
