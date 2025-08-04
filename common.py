@@ -173,7 +173,9 @@ def parse_args():
     # For PASS
     parser.add_argument('--kd_weight', type=float, default=10.0)
     parser.add_argument('--protoAug_weight', type=float, default=10.0)
+    parser.add_argument('--temp', type=float, default=0.1, help="training time temperature used in PASS")
     parser.add_argument('--pass_ensemble', action='store_true')
+
 
     # For DER
     parser.add_argument('--mem_size_mode', type=str, default="uniform_fixed_total_mem")

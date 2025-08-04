@@ -47,8 +47,8 @@ def eval_InDistribution(args, detector, method):
                 labels = base[d, 0]['gt']
 
                 for t in range(eval_model+ 1):
-                    # sm_pred.append(det[d, t]['sm_pred'])
-                    sm_pred.append(base[d, t]['sm_pred'])       # debug because of this change
+                    # sm_pred.append(det[d, t]['sm_pred'])  # TODO: original version, check
+                    sm_pred.append(base[d, t]['sm_pred'])
                     scores.append(det[d, t][scorer])
 
                 all_scores = np.column_stack(scores)
@@ -164,6 +164,7 @@ def eval(args, model, train_data, test_data):
         print("")
         df = pd.merge(cil_df, ood_df, on=['scorer', 'detector'])
         full_df = df if full_df is None else pd.concat([full_df, df], ignore_index=True)
+        args.logger.print(full_df)
     
     full_df['scorer'] = pd.Categorical(full_df['scorer'], categories=['sm_scores', 'smmd_scores', 'en_scores', 'enmd_scores'], ordered=True)
     full_df['detector'] = pd.Categorical(full_df['detector'], categories=detector, ordered=True)

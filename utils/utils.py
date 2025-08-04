@@ -1002,9 +1002,11 @@ def collect_test_scores(args, model, method, train_data, test_data, **kwargs):
                     
                     with torch.no_grad():
                         model.net.eval()
-                        if "derpp" in args.model:
+                        if "derpp" in args.model or "pass" in args.model:
                             features = model.net.forward_features(x)
                             logits = model.net.forward_classifier(features)
+                            if "pass" in args.model:
+                                logits = logits[:, ::4]
                             # topk_scores = torch.softmax(logits, dim=1)[:, :args.num_cls_per_task]   # TODO: wrong
                             topk_scores = torch.softmax(logits, dim=1)[:, t * args.num_cls_per_task: (t + 1) * args.num_cls_per_task]
                             # this is to treat non-multi head models such as DER++ as multi-head. Slower but 100% compatible at least...

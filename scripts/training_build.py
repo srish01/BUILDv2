@@ -18,7 +18,6 @@ def train_build(task_list, args, train_data, model):
     
     # training
     for task_id in range(len(task_list)):
-        
         train_param[task_id] = {}
         task_loss_list = []
         per_epoch_acc, per_epoch_loss = [], []
@@ -34,6 +33,9 @@ def train_build(task_list, args, train_data, model):
             args.logger.print('Label', Counter(train_loader.dataset.targets))
 
         args.logger.print(f'[TRAINING] task: {task_id}...')
+
+        if "pass" in args.model and task_id > 0:
+            model.after_task(task_id)
         
         for epoch in range(args.n_epochs):
             iters = []
@@ -42,12 +44,18 @@ def train_build(task_list, args, train_data, model):
             
             
             for b, (x, y, f_y, names, orig) in tqdm(enumerate(train_loader)):
+                # if b > 50:
+                #     break
                 f_y = f_y[:, 1]
                 x, y = x.to(args.device), y.to(args.device)
                 if "more" in args.model:
                     loss = model.observe(x, y, names, x, f_y, task_id=task_id, b=b, B=len(train_loader))        # EDIT: changed from train_loaders[-1] to train_loader
-                elif "derpp" in args.model:
-                    loss = model.observe(x, y, epoch=epoch, not_aug_inputs=x)
+                elif "derpp"  in args.model:
+                    loss = model.observe(x, y, not_aug_inputs=x)
+                elif "pass" in args.model:
+                    loss = model.observe(x, y, task_id=task_id)
+                else:
+                    raise ValueError(f"{args.model} is not supported yet.")
 
                 total_loss_list.append(loss) 
                 task_loss_list.append(loss)
@@ -64,7 +72,6 @@ def train_build(task_list, args, train_data, model):
             per_epoch_loss.append(np.mean(loss_list))
 
 
-
             # At last epoch, 
             if (epoch + 1) == args.n_epochs:
                 args.logger.print(f'[TRAINING]: task {task_id}: at last epoch...')
@@ -77,7 +84,10 @@ def train_build(task_list, args, train_data, model):
                 collect_features, collect_logits, collect_gt = [], [], []
                 
                 model.reset_eval()
-                for x, y, _, _, _ in train_loader:             # EDIT: changed from train_loaders[-1] to train_loader
+                args.logger.print("Collecting features from training data...")
+                for b, (x, y, _, _, _) in tqdm(enumerate(train_loader)):             # EDIT: changed from train_loaders[-1] to train_loader
+                    # if b > 50:
+                    #     break
                     x, y = x.to(args.device), y.to(args.device)
                     # normalized_labels = y % args.num_cls_per_task
                     with torch.no_grad():
@@ -88,6 +98,8 @@ def train_build(task_list, args, train_data, model):
                         else:
                             features = model.net.forward_features(x)
                             logits = model.net.forward_classifier(features)
+                            if "pass" in args.model:
+                                logits = logits[:,::4] # each group of 4 logits is dedicated to 90° rotations
 
                         # score, pred = torch.max(torch.softmax(logits, dim=1), dim=1)
                         
@@ -109,6 +121,10 @@ def train_build(task_list, args, train_data, model):
                     cov = np.cov(f.T)
                     cov_list.append(cov)
                     mean = np.mean(f, 0)
+                    if "pass" in args.model:
+                        model._protos.append(mean)
+                        model._radiuses.append(np.trace(cov)/f.shape[1]) 
+                        model._radius = np.sqrt(np.mean(model._radiuses))
                     args.logger.print(f'Saving means for class {y}')
                     np.save(args.logger.dir() + f'mean_label_{y}', mean)
                 cov = np.array(cov_list).mean(0)

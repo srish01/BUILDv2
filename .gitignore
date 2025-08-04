@@ -1,5 +1,5 @@
 .idea
-
+*nohup*
 nohup.out
 deit_pretrained
 /cifar-10-python.tar.gz
@@ -22,3 +22,4 @@ cifar-10-batches-py/data_batch_4
 cifar-10-batches-py/data_batch_5
 cifar-10-batches-py/readme.html
 cifar-10-batches-py/test_batch
+

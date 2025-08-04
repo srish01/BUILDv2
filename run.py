@@ -118,8 +118,15 @@ if __name__ == '__main__':
             args.model_clip, args.clip_init = None, None
             from apprs.derpp import Derpp as Model
 
+        if args.model == 'pass_deitadapter':
+            args.model_clip, args.clip_init = None, None
+            from apprs.pa2s import PASS as Model
+    
     args.criterion = Criterion(args, args.net)
     model = Model(args)
+
+    if "pass" in args.model:
+        args.logger.print(f"PASS tb line: tensorboard --logdir {model.writer.log_dir}")
 
     
     # model called ViTAdapeter has two parameters: criterion: crossentropy loss and net: MyVisionTransformer (stored as args.net)

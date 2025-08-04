@@ -98,3 +98,13 @@ class BaseModel(nn.Module):
 
     def load(self, **kwargs):
         raise NotImplementedError()
+    
+
+    def set_seed(self):
+        seed=self.args.seed
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        # random.seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)  # For multi-GPU
+        torch.backends.cudnn.deterministic = True
