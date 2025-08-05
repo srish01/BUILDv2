@@ -175,7 +175,8 @@ def parse_args():
     parser.add_argument('--kd_weight', type=float, default=10.0)
     parser.add_argument('--protoAug_weight', type=float, default=10.0)
     parser.add_argument('--temp', type=float, default=0.1, help="training time temperature used in PASS")
-    parser.add_argument('--pass_ensemble', action='store_true')
+    parser.add_argument('--use_clip_grad', action='store_true')
+    parser.add_argument('--clip_grad', type=float, default=10.0,)
 
 
     # For DER

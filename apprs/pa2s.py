@@ -42,7 +42,8 @@ class PASS(BaseModel):
         self.tb_log_dir = f'{args.logger.dir()}runs/pass'
 
         now = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-        self.writer = SummaryWriter(f"{self.tb_log_dir}_{now}")
+        self.tb_path = f"{self.tb_log_dir}_{now}"
+        # self.writer = SummaryWriter(self.tb_path)
         self.iter = 0
         print("")
 
@@ -77,7 +78,8 @@ class PASS(BaseModel):
             total_norm += param_norm.item() ** 2
         total_norm = total_norm ** 0.5
 
-        # total_norm = torch.nn.utils.clip_grad_norm_(self.optimizer.param_groups[0]['params'], max_norm=10.0)
+        if self.args.use_clip_grad:
+            total_norm = torch.nn.utils.clip_grad_norm_(self.optimizer.param_groups[0]['params'], max_norm=self.args.clip_grad)
         
         self.optimizer.step()
 
@@ -88,12 +90,13 @@ class PASS(BaseModel):
         self.correct += correct
         self.total += len(labels)
 
-        self.writer.add_scalar(f"PASS-{task_id}/batch_acc", correct / len(labels), self.iter)
-        self.writer.add_scalar(f"PASS-{task_id}/tot_loss", loss, self.iter)
-        self.writer.add_scalar(f"PASS-{task_id}/loss_clf", loss_clf, self.iter)
-        self.writer.add_scalar(f"PASS-{task_id}/loss_fkd", loss_fkd, self.iter)
-        self.writer.add_scalar(f"PASS-{task_id}/loss_proto", loss_proto, self.iter)
-        self.writer.add_scalar(f"PASS-{task_id}/grad_norm", total_norm, self.iter)
+        with SummaryWriter(log_dir=self.tb_log_dir) as writer:
+            writer.add_scalar(f"PASS-{task_id}/batch_acc", correct / len(labels), self.iter)
+            writer.add_scalar(f"PASS-{task_id}/tot_loss", loss, self.iter)
+            writer.add_scalar(f"PASS-{task_id}/loss_clf", loss_clf, self.iter)
+            writer.add_scalar(f"PASS-{task_id}/loss_fkd", loss_fkd, self.iter)
+            writer.add_scalar(f"PASS-{task_id}/loss_proto", loss_proto, self.iter)
+            writer.add_scalar(f"PASS-{task_id}/grad_norm", total_norm, self.iter)
 
         self.iter += 1
 
