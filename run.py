@@ -25,7 +25,7 @@ if __name__ == '__main__':
     args = parse_args()
     args.logger = Logger(args, args.folder)
     args.logger.now()
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = f"cuda:{args.cuda_id}" if torch.cuda.is_available() else "cpu"
     # Assign None to feature extractors
     args.model_clip, args.model_vit = None, None
     id_dataset = args.dataset

@@ -15,6 +15,7 @@ __pycache__/*
 pycache
 clip/__pycache__/__init__.cpython-38.pyc
 clip/__pycache__/clip.cpython-38.pyc
+BUILDv2/cifar-100-python.tar.gz
 cifar-10-batches-py/data_batch_1
 cifar-10-batches-py/data_batch_2
 cifar-10-batches-py/data_batch_3
@@ -23,3 +24,4 @@ cifar-10-batches-py/data_batch_5
 cifar-10-batches-py/readme.html
 cifar-10-batches-py/test_batch
 
+cifar-100-python.tar.gz
