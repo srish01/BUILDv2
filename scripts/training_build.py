@@ -44,7 +44,7 @@ def train_build(task_list, args, train_data, model):
             
             
             for b, (x, y, f_y, names, orig) in tqdm(enumerate(train_loader)):
-                # if b > 50:
+                # if b > 10:
                 #     break
                 f_y = f_y[:, 1]
                 x, y = x.to(args.device), y.to(args.device)
@@ -86,7 +86,7 @@ def train_build(task_list, args, train_data, model):
                 model.reset_eval()
                 args.logger.print("Collecting features from training data...")
                 for b, (x, y, _, _, _) in tqdm(enumerate(train_loader)):             # EDIT: changed from train_loaders[-1] to train_loader
-                    # if b > 50:
+                    # if b > 10:
                     #     break
                     x, y = x.to(args.device), y.to(args.device)
                     # normalized_labels = y % args.num_cls_per_task
@@ -196,9 +196,12 @@ def train_build(task_list, args, train_data, model):
        
         train_param[task_id]['loss'] = per_epoch_loss
         train_param[task_id]['acc'] = per_epoch_acc
-        
-    with open(args.logger.dir() + "/train_param.json", "w") as out:
-        json.dump(train_param, out, indent = 4)
+    
+    try:
+        with open(args.logger.dir() + "/train_param.json", "w") as out:
+            json.dump(train_param, out, indent = 4)
+    except Exception as e:
+        args.logger.print(e)
     
     time_elapsed = datetime.now() - start_time 
     print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
