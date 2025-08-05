@@ -126,7 +126,7 @@ if __name__ == '__main__':
     model = Model(args)
 
     if "pass" in args.model:
-        args.logger.print(f"PASS tb line: tensorboard --logdir {model.writer.log_dir}")
+        args.logger.print(f"PASS tb line: tensorboard --logdir {model.tb_log_dir}")
 
     
     # model called ViTAdapeter has two parameters: criterion: crossentropy loss and net: MyVisionTransformer (stored as args.net)
@@ -154,13 +154,13 @@ if __name__ == '__main__':
             args.train = True
             model.training = True
             train_build(task_list, args, train_data, model)       
-        elif args.framework == 'build' and args.val:
+        if args.framework == 'build' and args.val:
             args.train = False
             model.training = False
             model.eval()
             from hyperparam import search_hyperparam     
             search_hyperparam(args, model, train_data) 
-        elif args.framework == 'build' and args.test:
+        if args.framework == 'build' and args.test:
             args.train = False
             model.training = False
             model.eval()
