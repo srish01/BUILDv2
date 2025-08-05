@@ -42,7 +42,7 @@ class PASS(BaseModel):
         self.tb_log_dir = f'{args.logger.dir()}runs/pass'
 
         now = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-        self.tb_path = f"{self.tb_log_dir}_{now}"
+        self.tb_log_dir = f"{self.tb_log_dir}_{now}"
         # self.writer = SummaryWriter(self.tb_path)
         self.iter = 0
         print("")
