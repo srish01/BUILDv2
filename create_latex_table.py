@@ -21,8 +21,8 @@ vocab = {'sm_scores': 'SM',
 model_dataset_exp_dict = {
     derpp_id  : {
         cifar10_5T_id: 'derpp_cifar10-5T',  # canon one
-        cifar100_10T_id: 'derpp_cifar10-5T',
-        cifar100_20T_id: 'derpp_cifar10-5T',
+        cifar100_10T_id: 'derpp_cifar100-10t',
+        cifar100_20T_id: 'derpp_cifar100-20t',
     },
     build_id  : {
         cifar10_5T_id: 'derpp_cifar10-5T',  # canon one
@@ -31,24 +31,34 @@ model_dataset_exp_dict = {
     },
 }
 
-metrics = ['ACA', 'AIA', 'AF', 'AUC', 'AUPR']
+metrics = ['ACA', 
+           'AIA', 
+           'AF', 
+           'AUC', 
+           'AUPR']
+scorers = [
+    'SM', 
+    'SMMD', 
+    'EN', 
+    'ENMD'
+]
 
-model_list = [build_id, derpp_id]
+model_list = [derpp_id]
 dataset_list = [cifar10_5T_id, cifar100_10T_id, cifar100_20T_id]
 
 for model in model_list:
     dfs = []
-    for ds in dataset_list:
+    for j, ds in enumerate(dataset_list):
         exp = model_dataset_exp_dict[model][ds]
         csv_path = join(root, exp, 'full_results.csv')
         df = pd.read_csv(csv_path).drop(['Unnamed: 0'],axis=1)
         df['scorer'] = df['scorer'].str.split('_').str[0].str.upper()
         df['detector'] = df['detector'].str.capitalize()
+        df = df[df['scorer'].isin(scorers)].reset_index(drop=True)
         df = df.round(2)
-
-
         avg = df[metrics].mean()
-        avg["detector"] = "Avg."
+        avg = avg.round(2)
+        avg["detector"] = "\\bottomrule\n \\rowcolor{lightblue}\n & & \\textbf{Avg.}"
         avg["scorer"] = ""
         avg = avg[df.columns]   # use same order
         avg = avg.astype(str)
@@ -68,16 +78,19 @@ for model in model_list:
 
         for i in range(len(scorers)):
             if i == 0 or scorers[i] != scorers[i-1]:
-                latex_str = f"\\multirow{{4}}{{*}}{{\\rotatebox{{90}}{{\\textbf{{{scorers[i]}}}}}}}"
+                latex_str = f"& \\multirow{{4}}{{*}}{{\\rotatebox{{90}}{{\\textbf{{{scorers[i]}}}}}}}\n"
                 df.loc[i, 'scorer'] = latex_str
             else:
                 df.loc[i, 'scorer'] = ""
 
-        df["detector"] = df["detector"].apply(lambda x: f"\\textbf{{{x}}}")
+        df["detector"] = df["detector"].apply(lambda x: f"\\textbf{{{x}}}" if x == 'Base' else f"& \\textbf{{{x}}}")
         
         df = pd.concat([df, pd.DataFrame([avg])], ignore_index=True)
 
         dfs.append(df)
+
+        # if j == 2:
+        #     df[metrics] = df[metrics].apply(lambda x: '-')
 
         print("")
 
