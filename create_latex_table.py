@@ -24,10 +24,10 @@ model_dataset_exp_dict = {
         cifar100_10T_id: 'derpp_cifar100-10t',
         cifar100_20T_id: 'derpp_cifar100-20t',
     },
-    build_id  : {
-        cifar10_5T_id: 'derpp_cifar10-5T',  # canon one
-        cifar100_10T_id: 'derpp_cifar10-5T',
-        cifar100_20T_id: 'derpp_cifar10-5T',
+    pass_id  : {
+        cifar10_5T_id: 'pass_cifar10-5T',  # canon one
+        cifar100_10T_id: 'pass_cifar10-5T',
+        cifar100_20T_id: 'pass_cifar10-5T',
     },
 }
 
@@ -43,8 +43,8 @@ scorers = [
     'ENMD'
 ]
 
-model_list = [derpp_id]
-dataset_list = [cifar10_5T_id, cifar100_10T_id, cifar100_20T_id]
+model_list = [derpp_id, pass_id]
+dataset_list = [cifar10_5T_id, cifar10_5T_id, cifar10_5T_id] #cifar100_10T_id, cifar100_20T_id]
 
 for model in model_list:
     dfs = []
@@ -70,10 +70,6 @@ for model in model_list:
             series_str[idx] = "\\textbf{" + series_str[idx] + "}"
             df[m] = series_str
         
-        
-
-        
-
         scorers = df["scorer"].copy().to_numpy()
 
         for i in range(len(scorers)):
@@ -89,7 +85,7 @@ for model in model_list:
 
         dfs.append(df)
 
-        # if j == 2:
+        # if j > 0 and model == pass_id:
         #     df[metrics] = df[metrics].apply(lambda x: '-')
 
         print("")
@@ -97,6 +93,5 @@ for model in model_list:
     metric_parts = [df[metrics].reset_index(drop=True) for df in dfs]
     fixed_part = dfs[0][['scorer', 'detector']].reset_index(drop=True)
     df_combined = pd.concat([fixed_part] + metric_parts, axis=1)
-
-    df_combined.to_latex("table.tex", index=False, escape=False)
+    df_combined.to_latex(f"logs/table_{model}.tex", index=False, escape=False)
     print("")
